@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asterix</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app">
+
+        <header class="topbar">
+
+            <div class="brand">
+                ASTERIX
+            </div>
+
+            <div class="sessions">
+                <span id="newSession">+ NEW SESSION</span>
+                <span id="sessionName">SESSION 01</span>
+                <span class="close">×</span>
+            </div>
+
+            <div class="status">
+                <span class="status-dot"></span>
+                ONLINE
+            </div>
+
+        </header>
+
+        <main class="chat-area" id="chatArea">
+
+            <div class="welcome" id="welcome">
+
+                <h1>ASTERIX</h1>
+
+                <p>
+                    Your intelligent personal assistant.
+                </p>
+
+            </div>
+
+        </main>
+
+        <div class="input-container">
+
+            <input
+                id="messageInput"
+                type="text"
+                placeholder="Ask Asterix anything..."
+                autocomplete="off"
+            >
+
+            <button id="sendButton" title="Send">
+                ↑
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        const input = document.getElementById("messageInput");
+        const sendButton = document.getElementById("sendButton");
+        const chatArea = document.getElementById("chatArea");
+        const welcome = document.getElementById("welcome");
+        const newSession = document.getElementById("newSession");
+
+        async function sendMessage() {
+
+            const message = input.value.trim();
+
+            if (message === "") {
+                return;
+            }
+
+            const currentWelcome =
+                document.getElementById("welcome");
+
+            if (currentWelcome) {
+                currentWelcome.remove();
+            }
+
+            const userMessage =
+                document.createElement("div");
+
+            userMessage.className =
+                "message user-message";
+
+            userMessage.innerHTML = `
+                <div class="message-label">YOU</div>
+                <div class="message-text">
+                    ${escapeHtml(message)}
+                </div>
+            `;
+
+            chatArea.appendChild(userMessage);
+
+            input.value = "";
+
+            scrollToBottom();
+
+            showThinking();
+
+            try {
+
+                const result =
+                    await window.asterix.sendMessage(message);
+
+                removeThinking();
+
+                if (result.error) {
+
+                    addAssistantMessage(
+                        "I encountered an error: " +
+                        result.error
+                    );
+
+                    return;
+                }
+
+                addAssistantMessage(
+                    result.response
+                );
+
+            }
+
+            catch (error) {
+
+                removeThinking();
+
+                addAssistantMessage(
+                    "I couldn't connect to my Python backend."
+                );
+
+                console.error(error);
+            }
+
+        }
+
+        function addAssistantMessage(text) {
+
+            const assistantMessage =
+                document.createElement("div");
+
+            assistantMessage.className =
+                "message assistant-message";
+
+            assistantMessage.innerHTML = `
+                <div class="message-label">ASTERIX</div>
+                <div class="message-text">
+                    ${escapeHtml(text)}
+                </div>
+            `;
+
+            chatArea.appendChild(
+                assistantMessage
+            );
+
+            scrollToBottom();
+        }
+
+        function showThinking() {
+
+            const thinking =
+                document.createElement("div");
+
+            thinking.className =
+                "message assistant-message";
+
+            thinking.id = "thinking";
+
+            thinking.innerHTML = `
+                <div class="message-label">ASTERIX</div>
+
+                <div class="thinking">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+
+            chatArea.appendChild(thinking);
+
+            scrollToBottom();
+        }
+
+        function removeThinking() {
+
+            const thinking =
+                document.getElementById("thinking");
+
+            if (thinking) {
+                thinking.remove();
+            }
+        }
+
+        input.addEventListener(
+            "keydown",
+            function(event) {
+
+                if (event.key === "Enter") {
+
+                    event.preventDefault();
+
+                    sendMessage();
+                }
+
+            }
+        );
+
+        sendButton.addEventListener(
+            "click",
+            sendMessage
+        );
+
+        newSession.addEventListener(
+            "click",
+            function() {
+
+                chatArea.innerHTML = `
+                    <div class="welcome" id="welcome">
+
+                        <h1>ASTERIX</h1>
+
+                        <p>
+                            Your intelligent personal assistant.
+                        </p>
+
+                    </div>
+                `;
+
+                input.value = "";
+
+                input.focus();
+
+            }
+        );
+
+        function scrollToBottom() {
+
+            chatArea.scrollTo({
+                top: chatArea.scrollHeight,
+                behavior: "smooth"
+            });
+
+        }
+
+        function escapeHtml(text) {
+
+            const div =
+                document.createElement("div");
+
+            div.textContent = text;
+
+            return div.innerHTML;
+        }
+
+        input.focus();
+
+    </script>
+
+</body>
+
+</html>
